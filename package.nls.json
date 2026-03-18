@@ -17,6 +17,11 @@
     "vscode-pets.theme.description": "Theme",
     "vscode-pets.throwBallWithMouse.description": "Throw ball with mouse",
     "vscode-pets.disableEffects.description": "Disable effects",
+    "vscode-pets.flingGravity.description": "Gravity applied to flung pets per animation frame (higher = falls faster)",
+    "vscode-pets.flingDamping.description": "Air resistance for flung pets (1.0 = no slowdown, 0.5 = heavy drag)",
+    "vscode-pets.flingTraction.description": "Ground friction when a flung pet lands (1.0 = no friction, 0.0 = stops immediately)",
+    "vscode-pets.flingMaxSpeed.description": "Maximum speed cap (px/frame) for a flung pet",
+    "vscode-pets.flingThreshold.description": "Minimum throw speed (px/frame) required to trigger a fling instead of a drop",
 
     "vscode-pets.petColor.black" : "Black",
     "vscode-pets.petColor.lightbrown" : "Light Brown",

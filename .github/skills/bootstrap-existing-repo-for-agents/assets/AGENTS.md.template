@@ -1,0 +1,210 @@
+# AGENTS.md — {{PROJECT_NAME}}
+
+> This file is the authoritative instruction set for all AI coding agents (GitHub Copilot, Claude, Codex, and others) working on this repository. Read this entire file before taking any action. Follow every instruction exactly as written.
+
+---
+
+## Table of Contents
+
+1. [Project Overview](#1-project-overview)
+2. [Tech Stack](#2-tech-stack)
+3. [Project Structure](#3-project-structure)
+4. [How to Build & Run](#4-how-to-build--run)
+5. [Environment Variables](#5-environment-variables)
+6. [Testing](#6-testing)
+7. [Self-Iteration Rules](#7-self-iteration-rules)
+8. [Code Conventions](#8-code-conventions)
+9. [Definition of Done](#9-definition-of-done)
+10. [What NOT To Do](#10-what-not-to-do)
+11. [Git & PR Behavior](#11-git--pr-behavior)
+
+---
+
+## 1. Project Overview
+
+{{PROJECT_DESCRIPTION}}
+
+---
+
+## 2. Tech Stack
+
+{{TECH_STACK_TABLE}}
+
+---
+
+## 3. Project Structure
+
+```
+{{FOLDER_STRUCTURE}}
+```
+
+### Naming Conventions
+
+{{NAMING_CONVENTIONS_TABLE}}
+
+---
+
+## 4. How to Build & Run
+
+### Prerequisites
+
+{{PREREQUISITES}}
+
+### Development
+
+```bash
+{{DEV_COMMAND}}
+```
+
+### Production Build
+
+```bash
+{{BUILD_COMMAND}}
+```
+
+### Production Start
+
+```bash
+{{START_COMMAND}}
+```
+
+### Verification (agent self-check)
+
+```bash
+{{AGENT_VERIFY_COMMAND}}
+```
+
+This chains {{VERIFY_CHAIN_DESCRIPTION}} in one command. The agent **must** run this before considering any task done. All steps must pass with zero errors.
+
+### Individual Commands
+
+```bash
+{{INDIVIDUAL_COMMANDS}}
+```
+
+---
+
+## 5. Environment Variables
+
+Store all environment variables in `.env`. Commit `.env.example` with all keys present but no values. **Never commit `.env`.**
+
+When reading `process.env` values with a fallback, always use `||` not `??`. A key that exists but is blank in `.env` (e.g. `PORT=`) passes through `??` as an empty string; `||` catches it and applies the default.
+
+{{ENV_VARS_TABLE}}
+
+---
+
+## 6. Testing
+
+### Philosophy
+
+- Write tests for every feature added.
+- When a bug is found, write a test case that reproduces it before fixing it. This prevents regression.
+- Do not write redundant tests. Test core functionality only.
+- Tests must be deterministic and fast.
+
+### Commands
+
+```bash
+{{TEST_COMMANDS}}
+```
+
+### Unit Tests
+
+{{UNIT_TEST_DESCRIPTION}}
+
+### E2E Tests
+
+{{E2E_TEST_DESCRIPTION}}
+
+{{SMOKE_TEST_SECTION}}
+
+---
+
+## 7. Self-Iteration Rules
+
+### Autonomous Error Fixing
+
+The agent fixes its own errors autonomously without asking the user. Follow this loop:
+
+1. **Attempt 1:** Implement the task. Run `{{AGENT_VERIFY_COMMAND}}`.
+2. If verification fails: analyze the failure, produce a fix, run `{{AGENT_VERIFY_COMMAND}}` again.
+3. **Attempt {{MAX_RETRIES}}:** Apply the fix.
+4. If verification fails again: **stop**. Flag the issue to the user with: what was attempted, what failed, the full error output.
+
+Never make more than **{{MAX_RETRIES}} attempts** before flagging.
+
+### Process Execution Rules
+
+- Always pass non-interactive flags to CLI tools (e.g. `-y`, `--yes`, `CI=true`).
+- Set an explicit timeout on every shell process. If a process has not exited within **120 seconds**, kill it and count it as a failed attempt.
+- Never let an install or scaffold command block waiting for user input.
+
+### Linting & Formatting
+
+Always run before marking a task done:
+
+```bash
+{{LINT_FORMAT_COMMANDS}}
+```
+
+---
+
+## 8. Code Conventions
+
+{{CODE_CONVENTIONS}}
+
+### Security
+
+- Never hardcode secrets, API keys, credentials, or passwords in source code.
+- Never log sensitive user data.
+- Sanitize all user inputs before persisting or using them.
+- Never expose internal server errors to the client — log server-side, return safe generic messages.
+- Never open `.env` to investigate an issue. Read the source file that consumes the variable instead — the bug is always there, not in the env file.
+- When a `.copilotignore` is present, keep it in sync with any secrets-related entries added to `.gitignore`.
+
+### Environment Variables
+
+- Always use `||` (not `??`) when reading `process.env` values that have a fallback default. `??` only guards against `null`/`undefined`; a key present but blank in `.env` (e.g. `STORAGE_PATH=`) passes through as an empty string and causes silent downstream failures. `||` catches empty strings too.
+
+---
+
+## 9. Definition of Done
+
+Before considering any task complete, every item on this checklist must pass. No exceptions.
+
+{{DEFINITION_OF_DONE_CHECKLIST}}
+
+Run the full chain with:
+
+```bash
+{{AGENT_VERIFY_COMMAND}}
+```
+
+---
+
+## 10. What NOT To Do
+
+{{WHAT_NOT_TO_DO}}
+
+---
+
+## 11. Git & PR Behavior
+
+### Branching
+
+{{BRANCHING_STRATEGY}}
+
+> **Important for Copilot coding agent:** Copilot automatically creates branches prefixed with `copilot/`. This is expected and correct. Do not fight this behavior.
+
+### Commit Messages
+
+{{COMMIT_MESSAGE_FORMAT}}
+
+### Pull Requests
+
+{{PR_DESCRIPTION_REQUIREMENTS}}
+
+### Review Workflow
+
+The human owner reviews all PRs raised by Copilot coding agent. Do not self-merge. Request review from the repository owner when the PR is ready.

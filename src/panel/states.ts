@@ -38,6 +38,20 @@ export interface IPetType {
 
     showSpeechBubble(message: string, duration: number): void;
     remove(): void;
+
+    // Drag & fling API
+    isDragging: boolean;
+    startDrag(): void;
+    endDrag(): void;
+    startFling(vx: number, vy: number): void;
+    isFlung: boolean;
+    tickFling(): void;
+    configureFling(
+        gravity: number,
+        damping: number,
+        traction: number,
+        maxSpeed: number,
+    ): void;
 }
 
 export class PetInstanceState {

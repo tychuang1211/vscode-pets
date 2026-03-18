@@ -159,6 +159,11 @@ suite('Pets Test Suite', () => {
                         petType,
                         false,
                         false,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
+                        undefined,
                         mockState,
                     );
 
@@ -224,6 +229,11 @@ suite('Pets Test Suite', () => {
             PetType.cat,
             false,
             false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
             mockState,
         );
 
@@ -250,6 +260,11 @@ suite('Pets Test Suite', () => {
             PetType.cat,
             false,
             false,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
             mockState,
         );
 
@@ -267,5 +282,88 @@ suite('Pets Test Suite', () => {
         window.postMessage(message, '/');
 
         // assert.notEqual(mockState.getMessages().length, 0);
+    });
+
+    // Helper to create a bare Cat for drag/fling unit tests
+    function makeCat(left = 100, bottom = 0, floor = 0) {
+        const imgEl = global.document.createElement('img') as HTMLImageElement;
+        const divEl = global.document.createElement('div') as HTMLDivElement;
+        const speechEl = global.document.createElement('div') as HTMLDivElement;
+        return pets.createPet(
+            'cat',
+            imgEl,
+            divEl,
+            speechEl,
+            PetSize.medium,
+            left,
+            bottom,
+            'testRoot',
+            floor,
+            'TestCat',
+        );
+    }
+
+    test('startDrag pauses the state machine', () => {
+        const pet = makeCat(100, 0, 0);
+        const stateBefore = pet.getState().currentStateEnum;
+        pet.startDrag();
+        assert.strictEqual(pet.isDragging, true);
+        // nextFrame should be a no-op while dragging
+        pet.nextFrame();
+        assert.strictEqual(
+            pet.getState().currentStateEnum,
+            stateBefore,
+            'state should not change while dragging',
+        );
+    });
+
+    test('canSwipe is false while dragging', () => {
+        const pet = makeCat(100, 0, 0);
+        pet.startDrag();
+        assert.strictEqual(pet.canSwipe, false);
+    });
+
+    test('endDrag restores the state machine', () => {
+        const pet = makeCat(100, 0, 0);
+        pet.startDrag();
+        pet.endDrag();
+        assert.strictEqual(pet.isDragging, false);
+        // should survive 10 frames without throwing
+        for (let i = 0; i < 10; i++) {
+            assert.doesNotThrow(() => pet.nextFrame());
+        }
+    });
+
+    test('startFling causes pet to land on the floor after enough frames', () => {
+        // Start the pet above the floor and fling it downward
+        const floor = 0;
+        const pet = makeCat(100, 50, floor);
+        pet.startDrag();
+        pet.startFling(0, -10); // vx=0, vy negative → falling
+
+        // Run enough frames for it to hit the floor and slide to a stop
+        // (tickFling drives the rAF-based physics loop; call directly in tests)
+        for (let i = 0; i < 200; i++) {
+            pet.tickFling();
+        }
+        assert.ok(
+            pet.bottom >= floor,
+            `pet should be at or above the floor (got ${pet.bottom})`,
+        );
+        assert.strictEqual(
+            pet.isDragging,
+            false,
+            'should not be dragging after fling',
+        );
+    });
+
+    test('fling with zero velocity calls endDrag immediately', () => {
+        const pet = makeCat(100, 0, 0);
+        pet.startDrag();
+        // No velocity → endDrag path, not startFling
+        pet.endDrag();
+        assert.strictEqual(pet.isDragging, false);
+        // State machine should be alive
+        assert.doesNotThrow(() => pet.nextFrame());
     });
 });

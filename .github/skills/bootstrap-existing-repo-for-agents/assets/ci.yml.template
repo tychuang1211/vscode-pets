@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "copilot/**"
+      - "feat/**"
+      - "fix/**"
+      - "chore/**"
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  verify:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      {{CI_STEPS}}

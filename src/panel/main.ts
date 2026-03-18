@@ -55,6 +55,7 @@ function handleMouseOver(e: MouseEvent) {
 function startAnimations(
     collision: HTMLDivElement,
     pet: IPetType,
+    flingThreshold: number,
     stateApi?: VscodeStateApi,
 ) {
     if (!stateApi) {
@@ -62,6 +63,78 @@ function startAnimations(
     }
 
     collision.addEventListener('mouseover', handleMouseOver);
+
+    // --- Drag & fling ---
+    const velocityHistory: Array<{ dx: number; dy: number }> = [];
+    let lastPointerX = 0;
+    let lastPointerY = 0;
+
+    collision.addEventListener('pointerdown', (e: PointerEvent) => {
+        e.preventDefault();
+        collision.setPointerCapture(e.pointerId);
+        pet.startDrag();
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+        velocityHistory.length = 0;
+    });
+
+    collision.addEventListener('pointermove', (e: PointerEvent) => {
+        if (!pet.isDragging) {
+            return;
+        }
+        e.preventDefault();
+        const dx = e.clientX - lastPointerX;
+        const dy = e.clientY - lastPointerY;
+
+        velocityHistory.push({ dx, dy });
+        if (velocityHistory.length > 5) {
+            velocityHistory.shift();
+        }
+
+        pet.positionLeft(Math.max(0, pet.left + dx));
+        // dy positive = pointer moved down → bottom decreases
+        pet.positionBottom(Math.max(pet.floor, pet.bottom - dy));
+
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+    });
+
+    const onRelease = (e: PointerEvent) => {
+        if (!pet.isDragging) {
+            return;
+        }
+        e.preventDefault();
+
+        if (velocityHistory.length > 0) {
+            const avgVx =
+                velocityHistory.reduce((s, v) => s + v.dx, 0) /
+                velocityHistory.length;
+            const avgVy =
+                velocityHistory.reduce((s, v) => s + v.dy, 0) /
+                velocityHistory.length;
+            if (
+                Math.abs(avgVx) > flingThreshold ||
+                Math.abs(avgVy) > flingThreshold
+            ) {
+                // avgVy positive = pointer moved down → negate for pet's bottom-up vy
+                pet.startFling(avgVx, -avgVy);
+                const flingLoop = () => {
+                    if (!pet.isFlung) {
+                        saveState(stateApi);
+                        return;
+                    }
+                    pet.tickFling();
+                    requestAnimationFrame(flingLoop);
+                };
+                requestAnimationFrame(flingLoop);
+                return;
+            }
+        }
+        pet.endDrag();
+    };
+
+    collision.addEventListener('pointerup', onRelease);
+    collision.addEventListener('pointercancel', onRelease);
 }
 
 function addPetToPanel(
@@ -73,6 +146,11 @@ function addPetToPanel(
     bottom: number,
     floor: number,
     name: string,
+    flingGravity: number,
+    flingDamping: number,
+    flingTraction: number,
+    flingMaxSpeed: number,
+    flingThreshold: number,
     stateApi?: VscodeStateApi,
 ): PetElement {
     var petSpriteElement: HTMLImageElement = document.createElement('img');
@@ -113,7 +191,13 @@ function addPetToPanel(
             name,
         );
         petCounter++;
-        startAnimations(collisionElement, newPet, stateApi);
+        newPet.configureFling(
+            flingGravity,
+            flingDamping,
+            flingTraction,
+            flingMaxSpeed,
+        );
+        startAnimations(collisionElement, newPet, flingThreshold, stateApi);
     } catch (e: any) {
         // Remove elements
         petSpriteElement.remove();
@@ -158,6 +242,11 @@ function recoverState(
     basePetUri: string,
     petSize: PetSize,
     floor: number,
+    flingGravity: number,
+    flingDamping: number,
+    flingTraction: number,
+    flingMaxSpeed: number,
+    flingThreshold: number,
     stateApi?: VscodeStateApi,
 ) {
     if (!stateApi) {
@@ -191,6 +280,11 @@ function recoverState(
                 parseInt(p.elBottom ?? '0'),
                 floor,
                 p.petName ?? randomName(p.petType ?? PetType.cat),
+                flingGravity,
+                flingDamping,
+                flingTraction,
+                flingMaxSpeed,
+                flingThreshold,
                 stateApi,
             );
             allPets.push(newPet);
@@ -248,6 +342,11 @@ export function petPanelApp(
     petType: PetType,
     throwBallWithMouse: boolean,
     disableEffects: boolean,
+    flingGravity: number = 0.45,
+    flingDamping: number = 0.99,
+    flingTraction: number = 0.75,
+    flingMaxSpeed: number = 50,
+    flingThreshold: number = 1.0,
     stateApi?: VscodeStateApi,
 ) {
     if (!stateApi) {
@@ -295,13 +394,28 @@ export function petPanelApp(
                 floor,
                 floor,
                 randomName(petType),
+                flingGravity,
+                flingDamping,
+                flingTraction,
+                flingMaxSpeed,
+                flingThreshold,
                 stateApi,
             ),
         );
         saveState(stateApi);
     } else {
         console.log('Recovering state - ', state);
-        recoverState(basePetUri, petSize, floor, stateApi);
+        recoverState(
+            basePetUri,
+            petSize,
+            floor,
+            flingGravity,
+            flingDamping,
+            flingTraction,
+            flingMaxSpeed,
+            flingThreshold,
+            stateApi,
+        );
     }
 
     initCanvas(PET_CANVAS_ID);
@@ -371,6 +485,11 @@ export function petPanelApp(
                         floor,
                         floor,
                         message.name ?? randomName(message.type),
+                        flingGravity,
+                        flingDamping,
+                        flingTraction,
+                        flingMaxSpeed,
+                        flingThreshold,
                         stateApi,
                     ),
                 );

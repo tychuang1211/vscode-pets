@@ -167,6 +167,7 @@ img.pet {
 	right: 0px;
 	bottom:0px;
 	z-index: var(--collision-z-index);
+	cursor: grab;
 }
 
 .bubble {

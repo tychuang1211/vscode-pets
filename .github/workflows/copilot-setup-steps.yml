@@ -1,0 +1,37 @@
+name: "Copilot Setup Steps"
+
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing from the repository's "Actions" tab.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # This job MUST be named `copilot-setup-steps` — Copilot coding agent looks for this exact name.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    # Cap setup time. Maximum supported value is 59.
+    timeout-minutes: 15
+
+    # Minimal permissions. Copilot will receive its own token for its operations.
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci

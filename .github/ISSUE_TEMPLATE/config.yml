@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Project Spec & Agent Instructions
+    url: https://github.com/tabloomoo/vscode-pets/blob/main/AGENTS.md
+    about: Full project spec, coding conventions, and agent instructions

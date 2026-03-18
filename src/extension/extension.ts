@@ -91,6 +91,36 @@ function getEffectsDisabledConfiguration(): boolean {
         .get<boolean>('disableEffects', false);
 }
 
+function getFlingGravityConfiguration(): number {
+    return vscode.workspace
+        .getConfiguration('vscode-pets')
+        .get<number>('flingGravity', 0.45);
+}
+
+function getFlingDampingConfiguration(): number {
+    return vscode.workspace
+        .getConfiguration('vscode-pets')
+        .get<number>('flingDamping', 0.99);
+}
+
+function getFlingTractionConfiguration(): number {
+    return vscode.workspace
+        .getConfiguration('vscode-pets')
+        .get<number>('flingTraction', 0.75);
+}
+
+function getFlingMaxSpeedConfiguration(): number {
+    return vscode.workspace
+        .getConfiguration('vscode-pets')
+        .get<number>('flingMaxSpeed', 50);
+}
+
+function getFlingThresholdConfiguration(): number {
+    return vscode.workspace
+        .getConfiguration('vscode-pets')
+        .get<number>('flingThreshold', 1.0);
+}
+
 function updatePanelDisableEffects(): void {
     const panel = getPetPanel();
     if (panel !== undefined) {
@@ -314,6 +344,11 @@ export function activate(context: vscode.ExtensionContext) {
                     getConfiguredThemeKind(),
                     getThrowWithMouseConfiguration(),
                     getEffectsDisabledConfiguration(),
+                    getFlingGravityConfiguration(),
+                    getFlingDampingConfiguration(),
+                    getFlingTractionConfiguration(),
+                    getFlingMaxSpeedConfiguration(),
+                    getFlingThresholdConfiguration(),
                 );
 
                 if (PetPanel.currentPanel) {
@@ -361,6 +396,11 @@ export function activate(context: vscode.ExtensionContext) {
         getConfiguredThemeKind(),
         getThrowWithMouseConfiguration(),
         getEffectsDisabledConfiguration(),
+        getFlingGravityConfiguration(),
+        getFlingDampingConfiguration(),
+        getFlingTractionConfiguration(),
+        getFlingMaxSpeedConfiguration(),
+        getFlingThresholdConfiguration(),
     );
     updateExtensionPositionContext().catch((e) => {
         console.error(e);
@@ -739,6 +779,11 @@ export function activate(context: vscode.ExtensionContext) {
                     getConfiguredThemeKind(),
                     getThrowWithMouseConfiguration(),
                     getEffectsDisabledConfiguration(),
+                    getFlingGravityConfiguration(),
+                    getFlingDampingConfiguration(),
+                    getFlingTractionConfiguration(),
+                    getFlingMaxSpeedConfiguration(),
+                    getFlingThresholdConfiguration(),
                 );
             },
         });
@@ -782,6 +827,11 @@ interface IPetPanel {
     update(): void;
     setThrowWithMouse(newThrowWithMouse: boolean): void;
     updateDisableEffects(disableEffects: boolean): void;
+    flingGravity(): number;
+    flingDamping(): number;
+    flingTraction(): number;
+    flingMaxSpeed(): number;
+    flingThreshold(): number;
     tick(): void;
     dispose(): void;
 }
@@ -796,6 +846,11 @@ class PetWebviewContainer implements IPetPanel {
     protected _themeKind: vscode.ColorThemeKind;
     protected _throwBallWithMouse: boolean;
     protected _disableEffects: boolean;
+    protected _flingGravity: number;
+    protected _flingDamping: number;
+    protected _flingTraction: number;
+    protected _flingMaxSpeed: number;
+    protected _flingThreshold: number;
     protected _tickIntervalId: NodeJS.Timeout | number | undefined;
 
     constructor(
@@ -807,6 +862,11 @@ class PetWebviewContainer implements IPetPanel {
         themeKind: ColorThemeKind,
         throwBallWithMouse: boolean,
         disableEffects: boolean,
+        flingGravity: number,
+        flingDamping: number,
+        flingTraction: number,
+        flingMaxSpeed: number,
+        flingThreshold: number,
     ) {
         this._extensionUri = extensionUri;
         this._petColor = color;
@@ -816,6 +876,11 @@ class PetWebviewContainer implements IPetPanel {
         this._themeKind = themeKind;
         this._throwBallWithMouse = throwBallWithMouse;
         this._disableEffects = disableEffects;
+        this._flingGravity = flingGravity;
+        this._flingDamping = flingDamping;
+        this._flingTraction = flingTraction;
+        this._flingMaxSpeed = flingMaxSpeed;
+        this._flingThreshold = flingThreshold;
         this._tickIntervalId = setInterval(() => {
             this.tick();
         }, 100);
@@ -847,6 +912,26 @@ class PetWebviewContainer implements IPetPanel {
 
     public disableEffects(): boolean {
         return this._disableEffects;
+    }
+
+    public flingGravity(): number {
+        return this._flingGravity;
+    }
+
+    public flingDamping(): number {
+        return this._flingDamping;
+    }
+
+    public flingTraction(): number {
+        return this._flingTraction;
+    }
+
+    public flingMaxSpeed(): number {
+        return this._flingMaxSpeed;
+    }
+
+    public flingThreshold(): number {
+        return this._flingThreshold;
     }
 
     public updatePetColor(newColor: PetColor) {
@@ -1014,7 +1099,7 @@ class PetWebviewContainer implements IPetPanel {
 				<div id="foreground"></div>
                 <div id="background"></div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
-				<script nonce="${nonce}">petApp.petPanelApp("${basePetUri}", "${this.theme()}", ${this.themeKind()}, "${this.petColor()}", "${this.petSize()}", "${this.petType()}", ${this.throwBallWithMouse()}, ${this.disableEffects()});</script>
+				<script nonce="${nonce}">petApp.petPanelApp("${basePetUri}", "${this.theme()}", ${this.themeKind()}, "${this.petColor()}", "${this.petSize()}", "${this.petType()}", ${this.throwBallWithMouse()}, ${this.disableEffects()}, ${this.flingGravity()}, ${this.flingDamping()}, ${this.flingTraction()}, ${this.flingMaxSpeed()}, ${this.flingThreshold()});</script>
 			</body>
 			</html>`;
     }
@@ -1072,6 +1157,11 @@ class PetPanel extends PetWebviewContainer implements IPetPanel {
         themeKind: ColorThemeKind,
         throwBallWithMouse: boolean,
         disableEffects: boolean,
+        flingGravity: number,
+        flingDamping: number,
+        flingTraction: number,
+        flingMaxSpeed: number,
+        flingThreshold: number,
     ) {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn
@@ -1111,6 +1201,11 @@ class PetPanel extends PetWebviewContainer implements IPetPanel {
             themeKind,
             throwBallWithMouse,
             disableEffects,
+            flingGravity,
+            flingDamping,
+            flingTraction,
+            flingMaxSpeed,
+            flingThreshold,
         );
     }
 
@@ -1124,6 +1219,11 @@ class PetPanel extends PetWebviewContainer implements IPetPanel {
         themeKind: ColorThemeKind,
         throwBallWithMouse: boolean,
         disableEffects: boolean,
+        flingGravity: number,
+        flingDamping: number,
+        flingTraction: number,
+        flingMaxSpeed: number,
+        flingThreshold: number,
     ) {
         PetPanel.currentPanel = new PetPanel(
             panel,
@@ -1135,6 +1235,11 @@ class PetPanel extends PetWebviewContainer implements IPetPanel {
             themeKind,
             throwBallWithMouse,
             disableEffects,
+            flingGravity,
+            flingDamping,
+            flingTraction,
+            flingMaxSpeed,
+            flingThreshold,
         );
     }
 
@@ -1148,6 +1253,11 @@ class PetPanel extends PetWebviewContainer implements IPetPanel {
         themeKind: ColorThemeKind,
         throwBallWithMouse: boolean,
         disableEffects: boolean,
+        flingGravity: number,
+        flingDamping: number,
+        flingTraction: number,
+        flingMaxSpeed: number,
+        flingThreshold: number,
     ) {
         super(
             extensionUri,
@@ -1158,6 +1268,11 @@ class PetPanel extends PetWebviewContainer implements IPetPanel {
             themeKind,
             throwBallWithMouse,
             disableEffects,
+            flingGravity,
+            flingDamping,
+            flingTraction,
+            flingMaxSpeed,
+            flingThreshold,
         );
 
         this._panel = panel;
@@ -1278,6 +1393,11 @@ async function createPetPlayground(context: vscode.ExtensionContext) {
         getConfiguredThemeKind(),
         getThrowWithMouseConfiguration(),
         getEffectsDisabledConfiguration(),
+        getFlingGravityConfiguration(),
+        getFlingDampingConfiguration(),
+        getFlingTractionConfiguration(),
+        getFlingMaxSpeedConfiguration(),
+        getFlingThresholdConfiguration(),
     );
     if (PetPanel.currentPanel) {
         var collection = PetSpecification.collectionFromMemento(

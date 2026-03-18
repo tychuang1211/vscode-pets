@@ -51,6 +51,16 @@ export abstract class BasePetType implements IPetType {
     protected _climbHeight: number = 100;
     protected _fallSpeed: number = 5;
 
+    private _isDragging: boolean = false;
+    private _isFlung: boolean = false;
+    private _flingVx: number = 0;
+    private _flingVy: number = 0;
+
+    private _flingGravity: number = 0.45;
+    private _flingDamping: number = 0.99;
+    private _flingTraction: number = 0.75;
+    private _maxFlingSpeed: number = 50;
+
     constructor(
         spriteElement: HTMLImageElement,
         collisionElement: HTMLDivElement,
@@ -223,7 +233,11 @@ export abstract class BasePetType implements IPetType {
     }
 
     get canSwipe() {
-        return !isStateAboveGround(this.currentStateEnum);
+        return (
+            !this._isDragging &&
+            !this._isFlung &&
+            !isStateAboveGround(this.currentStateEnum)
+        );
     }
 
     get canChase() {
@@ -251,6 +265,125 @@ export abstract class BasePetType implements IPetType {
         this.currentStateEnum = States.swipe;
         this.currentState = resolveState(this.currentStateEnum, this);
         this.showSpeechBubble('👋');
+    }
+
+    get isDragging(): boolean {
+        return this._isDragging;
+    }
+
+    startDrag(): void {
+        this._isDragging = true;
+        this._isFlung = false;
+        // Only save holdState if not already holding one (e.g. mid-swipe)
+        if (!this.holdState) {
+            this.holdState = this.currentState;
+            this.holdStateEnum = this.currentStateEnum;
+        }
+    }
+
+    endDrag(): void {
+        this._isDragging = false;
+        if (this.holdState && this.holdStateEnum) {
+            this.currentState = this.holdState;
+            this.currentStateEnum = this.holdStateEnum;
+            this.holdState = undefined;
+            this.holdStateEnum = undefined;
+        } else {
+            this.currentStateEnum = this.sequence.startingState;
+            this.currentState = resolveState(this.currentStateEnum, this);
+        }
+    }
+
+    configureFling(
+        gravity: number,
+        damping: number,
+        traction: number,
+        maxSpeed: number,
+    ): void {
+        this._flingGravity = gravity;
+        this._flingDamping = damping;
+        this._flingTraction = traction;
+        this._maxFlingSpeed = maxSpeed;
+    }
+
+    startFling(vx: number, vy: number): void {
+        this._isDragging = false;
+        this._isFlung = true;
+        this._flingVx = Math.max(
+            -this._maxFlingSpeed,
+            Math.min(this._maxFlingSpeed, vx),
+        );
+        this._flingVy = Math.max(
+            -this._maxFlingSpeed,
+            Math.min(this._maxFlingSpeed, vy),
+        );
+        // holdState saved by startDrag() will be restored when fling ends
+    }
+
+    private _runFlingPhysics(): void {
+        this._flingVx *= this._flingDamping;
+        this._flingVy -= this._flingGravity;
+
+        let newLeft = this._left + this._flingVx;
+        let newBottom = this._bottom + this._flingVy;
+
+        // Ceiling clamp
+        const viewportH = window.innerHeight || 600;
+        if (newBottom > viewportH) {
+            newBottom = viewportH;
+            this._flingVy = -Math.abs(this._flingVy) * 0.5;
+        }
+
+        // Horizontal wall bounce
+        const viewportW = window.innerWidth || 800;
+        const maxLeft = viewportW - this.width;
+        if (newLeft < 0) {
+            newLeft = 0;
+            this._flingVx = Math.abs(this._flingVx) * 0.5;
+        } else if (maxLeft > 0 && newLeft > maxLeft) {
+            newLeft = maxLeft;
+            this._flingVx = -Math.abs(this._flingVx) * 0.5;
+        }
+
+        // Floor collision
+        if (newBottom <= this._floor) {
+            newBottom = this._floor;
+            this._flingVy = 0;
+            this._flingVx *= this._flingTraction;
+
+            if (Math.abs(this._flingVx) < 0.5) {
+                this._isFlung = false;
+                if (this.holdState && this.holdStateEnum) {
+                    this.currentState = this.holdState;
+                    this.currentStateEnum = this.holdStateEnum;
+                    this.holdState = undefined;
+                    this.holdStateEnum = undefined;
+                } else {
+                    this.currentStateEnum = this.sequence.startingState;
+                    this.currentState = resolveState(
+                        this.currentStateEnum,
+                        this,
+                    );
+                }
+            }
+        }
+
+        this.positionLeft(newLeft);
+        this.positionBottom(newBottom);
+
+        if (this._flingVx < -0.5) {
+            this.faceLeft();
+        } else if (this._flingVx > 0.5) {
+            this.faceRight();
+        }
+    }
+
+    get isFlung(): boolean {
+        return this._isFlung;
+    }
+
+    tickFling() {
+        this._runFlingPhysics();
     }
 
     chase(ballState: BallState, canvas: HTMLCanvasElement) {
@@ -292,6 +425,13 @@ export abstract class BasePetType implements IPetType {
     }
 
     nextFrame() {
+        if (this._isDragging) {
+            return;
+        }
+        if (this._isFlung) {
+            // Physics are driven by a requestAnimationFrame loop in main.ts
+            return;
+        }
         if (
             this.currentState.horizontalDirection === HorizontalDirection.left
         ) {

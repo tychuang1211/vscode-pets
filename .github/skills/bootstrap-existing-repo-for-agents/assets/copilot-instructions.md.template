@@ -1,0 +1,70 @@
+# {{PROJECT_NAME}} — Copilot Instructions
+
+{{PROJECT_ONE_LINE_DESCRIPTION}}
+
+Full spec is in `AGENTS.md` at the repo root. These instructions are the concise technical reference; AGENTS.md takes precedence on any conflict.
+
+---
+
+## Stack
+
+{{STACK_BULLETS}}
+
+---
+
+## Commands (run from repo root)
+
+```bash
+{{COMMANDS_BLOCK}}
+```
+
+**Always run `{{AGENT_VERIFY_COMMAND}}` before marking any task complete.**
+
+---
+
+## Project Layout
+
+```
+{{FOLDER_STRUCTURE_COMPACT}}
+```
+
+---
+
+## Key Rules
+
+<!-- Universal rules — always included, apply to every repo -->
+- **Never commit `.env`** — only `.env.example`.
+- **Never open `.env` to debug** — read the source file consuming the variable instead. The bug is always there.
+- **Use `||` not `??` for env var fallbacks** — `??` passes through empty strings; `||` catches them too.
+- **Keep `.copilotignore` in sync with `.gitignore`** — secrets-related entries must appear in both.
+- **Never self-merge a PR** — the human owner reviews all Copilot PRs.
+
+{{KEY_RULES_LIST}}
+
+---
+
+## API Routes
+
+{{API_ROUTES_LIST}}
+
+---
+
+## Environment Variables
+
+```
+{{ENV_VARS_BLOCK}}
+```
+
+---
+
+## Naming
+
+{{NAMING_TABLE}}
+
+---
+
+## PR Format
+
+Every PR description must include:
+1. **What** — one or two sentences
+2. **Walkthrough** — which files changed and why, written for the reviewer reading the diff

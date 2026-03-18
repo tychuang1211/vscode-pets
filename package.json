@@ -327,6 +327,7 @@
         ]
     },
     "scripts": {
+        "agent:verify": "npm run compile && npm run lint",
         "vscode:prepublish": "npm run compile",
         "compile:panel": "webpack",
         "compile:extension": "tsc -p ./tsconfig.extension.json",

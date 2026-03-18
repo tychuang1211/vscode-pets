@@ -1,0 +1,57 @@
+name: "🤖 Copilot Task"
+description: "Assign a well-scoped implementation task to GitHub Copilot coding agent."
+title: "[Task] "
+labels: ["copilot-task"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to create a task for GitHub Copilot coding agent.
+
+        **Tips for better results:**
+        - Be specific about what needs to change and why
+        - List acceptance criteria clearly — Copilot treats these as a checklist
+        - Name specific files or directories when you know which ones need changing
+        - Keep the scope to one coherent feature or fix per issue
+
+  - type: textarea
+    id: description
+    attributes:
+      label: "What needs to be done?"
+      description: "Clear description of the work required. Write this as if it were a prompt — because it is."
+      placeholder: |
+        Example: Add a sheep pet species. The sheep should walk left/right and sit idle.
+        It needs a sprite folder at media/sheep/, a class at src/panel/pets/sheep.ts extending
+        BasePetType, a PetType.sheep enum entry in src/common/types.ts, and registration in the
+        createPet factory in src/panel/pets.ts.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: "Acceptance Criteria"
+      description: "What does done look like? List specific, testable requirements."
+      placeholder: |
+        - [ ] Feature works as described
+        - [ ] Unit tests cover the new logic
+        - [ ] `npm run agent:verify` passes with zero errors
+    validations:
+      required: true
+
+  - type: textarea
+    id: files
+    attributes:
+      label: "Files to Create or Change"
+      description: "List the files you expect to be created or modified. Leave blank if unsure."
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: "Additional Context"
+      description: "Any constraints, references, or background that will help Copilot understand the task."
+    validations:
+      required: false

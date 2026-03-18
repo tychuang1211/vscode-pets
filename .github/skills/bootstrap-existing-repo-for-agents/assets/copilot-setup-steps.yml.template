@@ -1,0 +1,30 @@
+name: "Copilot Setup Steps"
+
+# Run automatically when this file changes — validates the setup steps work.
+# Also runnable manually from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # This job MUST be named `copilot-setup-steps` — Copilot coding agent looks for this exact name.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    # Optional: cap setup time. Maximum supported value is 59.
+    # timeout-minutes: 15
+
+    # Minimal permissions. Copilot will receive its own token for its operations.
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      {{SETUP_STEPS}}

@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: {{AGENTS_MD_URL}}
+    about: Full project spec and agent instructions

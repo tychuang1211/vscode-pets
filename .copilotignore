@@ -1,0 +1,4 @@
+# Prevent Copilot from reading secrets and credentials
+.env
+.env.*
+!.env.example
